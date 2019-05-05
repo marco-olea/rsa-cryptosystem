@@ -126,6 +126,7 @@ def populate_database(k: int, add: bool=False) -> None:
 
 
 def random_prime_in_database() -> int:
+    """Return a random prime number in the database."""
     max_ord = CURSOR.execute('SELECT MAX(ord) FROM primes').fetchone()[0]
     CURSOR.execute('SELECT * FROM primes WHERE ord = ?', [randint(1, max_ord)])
     return CURSOR.fetchone()[1]

@@ -1,7 +1,6 @@
 from math import log
 from random import randint
 from base64 import b64encode, b64decode
-from typing import Type
 from crypto.common import modular_inverse, power
 from crypto.primes import random_search, random_prime_in_database
 

@@ -1,34 +1,65 @@
 from math import log
 from random import randint
 from base64 import b64encode, b64decode
+from typing import Type
 from crypto.common import modular_inverse, power
 from crypto.primes import random_search, random_prime_in_database
 
 
 class PublicKey:
+    """Represents the public parameters in the RSA cryptosystem.
+    
+    Attributes:
+        n: The product of two (large) prime numbers.
+        e: An integer such that 1 < e < φ(n) and e and φ(n) are coprime, where φ is Euler's Totient
+            Function.
+    """
+    
     def __init__(self, n: int, e: int):
+        """Create a Public Key with the given parameters."""
         self.n = n
         self.e = e
         
 
 class PrivateKey:
+    """Represents the private parameters in the RSA cryptosystem.
+
+    Attributes:
+        n: The product of two (large) prime numbers.
+        d: The modular multiplicative inverse of the public parameter e modulo φ(n).
+    """
+    
     def __init__(self, n: int, d: int):
+        """Create a Private Key with the given parameters."""
         self.n = n
         self.d = d
 
 
 class RSA:
+    """The RSA cryptosystem for encrypting and decrypting strings.
+    
+    Attributes:
+        public_key: The public parameters.
+        private_key: The private parameters.
+    """
     
     MIN_DIGITS = 100
+    """The minimum size of the randomly-generated prime numbers."""
+    
     MAX_DIGITS = 119
+    """The maximum size of the randomly-generated prime numbers."""
+    
     SECURITY = 10
+    """Security parameter for the Miller-Rabin probabilistic primality test."""
     
     def __init__(self, public_key: PublicKey, private_key: PrivateKey):
+        """Initialize the cryptosystem with the given keys."""
         self.public_key = public_key
         self.private_key = private_key
     
     @classmethod
     def generate(cls):
+        """Initialize the cryptosystem with randomly-generated parameters."""
         # Choose random prime numbers p and q.
         num_digits_1 = num_digits_2 = 0
         while num_digits_1 == num_digits_2:
@@ -39,59 +70,76 @@ class RSA:
         p = random_search(num_bits_1, t=cls.SECURITY)
         q = random_search(num_bits_2, t=cls.SECURITY)
         
-        # Compute Euler's Totient Function (phi) of n = pq.
+        # Compute φ(n) = φ(p)φ(q).
         phi_n = (p - 1) * (q - 1)
         
-        # Choose a random e such that 1 < e < phi_n and gcd(e, phi_n) = 1.
-        # If we choose a random prime instead of any random number, we only need to check if phi_n
+        # Choose a random e such that 1 < e < φ(n) and gcd(e, φ(n)) = 1.
+        # If we choose a random prime instead of any random number, we only need to check if φ(n)
         # is a multiple of e to verify that phi_n and e are relatively prime.
         e = 1
         while phi_n % e == 0:
-            # Clearly phi_n is at least 200 decimal digits. The database does not store primes of
-            # this size, i.e., any element e in the database satisfies 1 < e < phi_n.
+            # Clearly φ(n) is at least 200 decimal digits. The database does not store primes of
+            # this size, i.e., any element e in the database satisfies 1 < e < φ(n).
             e = random_prime_in_database()
         
-        # Compute d, the modular multiplicative inverse of e mod phi_n.
+        # Compute d, the modular multiplicative inverse of e mod φ(n).
         d = modular_inverse(e, phi_n)
         
         n = p * q
         return RSA(PublicKey(n, e), PrivateKey(n, d))
     
     def encrypt(self, message: str) -> str:
+        """Encrypt a string.
+        
+        Args:
+            message: The string to encrypt.
+        Returns:
+            The result of applying the RSA algorithm for encryption.
+        """
+        # Apply m^e % n = c to each byte m in the message, and convert c to string.
         transformed_numbers = [
             str(power(m, self.public_key.e, self.public_key.n))
             for m in message.encode()]  # message.encode() -> utf-8 byte array
+        # Pre-appends '' or '0' to make sure each string has an even number of digits.
         transformed_numbers = [
             ('' if len(transformed_number) % 2 == 0 else '0') + transformed_number
             for transformed_number in transformed_numbers]
+        # Now we split each every transformed number into groups of two digits that represent bytes.
+        # Three-digit numbers might not be in [0, 255], but two-digit numbers always will be.
         byte_arrays = [
             [int(c[i: i + 2]) for i in range(0, len(c), 2)]
             for c in transformed_numbers]
+        # Encode the byte arrays with base64.
         b64_strings = [
             b64encode(bytes(byte_array)).decode()  # message.decode() -> utf-8 string
             for byte_array in byte_arrays]
+        # Return the strings separated by newlines.
         return '\n'.join(b64_strings)
     
     def decrypt(self, message: str) -> str:
+        """Decrypt a string.
+
+        Args:
+            message: The string to decrypt.
+        Returns:
+            The result of applying the RSA algorithm for decryption.
+        """
+        # Decode each string with base64.
         b64_arrays = [
             b64decode(line.encode())
             for line in message.strip().split()]
+        # Get the int (two-digit) representation of each byte in every byte array.
         byte_arrays = [
             [int(b) for b in b64_array]
             for b64_array in b64_arrays]
+        # Concatenate each byte array to form a string representing c. Single-digit numbers get
+        # pre-appended with a '0'. Convert the result to an int.
         transformed_numbers = [
             int(''.join([f'{b:02}' for b in byte_array]))
             for byte_array in byte_arrays]
-        original_numbers = [
+        # Apply c^d % n = m to each transformed number c to get the original byte m.
+        original_bytes = [
             power(c, self.private_key.d, self.private_key.n)
             for c in transformed_numbers]
-        return bytes(original_numbers).decode()
-    
-    
-if __name__ == '__main__':
-    rsa = RSA.generate()
-    msg = 'This is the message. áüñ'
-    enc = rsa.encrypt(msg)
-    dec = rsa.decrypt(enc)
-    print(enc)
-    print(dec)
+        # Return the single resulting byte array as a string.
+        return bytes(original_bytes).decode()

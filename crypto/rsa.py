@@ -54,8 +54,8 @@ class RSA:
     MAX_GROUP_SIZE = 30
     """Maximum number of bytes to group together."""
     
-    DELIMITER = '#'
-    """Delimiter character that should not be used in any Base64 encoding implementation."""
+    DELIMITER = '$'
+    """Delimiter character that is not used in Python 3.7's Base64 encoding implementation."""
     
     def __init__(self, public_key: PublicKey, private_key: PrivateKey):
         """Initialize the cryptosystem with the given keys."""
@@ -145,7 +145,7 @@ class RSA:
         numbers = [
             str(power(c, self.private_key.d, self.private_key.n))
             for c in transformed_numbers]
-        # Split each number m (from tight to left) into three-digit numbers.
+        # Split each number m (starting from right to left) into three-digit numbers.
         decrypted_bytes = [
             int(m[(0 if i < 3 else i - 3): i])
             for m in numbers[::-1] for i in range(len(m), 0, -3)]

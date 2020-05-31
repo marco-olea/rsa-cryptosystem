@@ -17,9 +17,9 @@ This project uses no third-party libraries for cryptography-related functions (p
 probabilistic prime number searches, number theory-related things like the euclidean algorithm,
 gcd, modular inverse, square-and-multiply algorithm, etc). These have been implemented from scratch.
 
-##Reference: 
+Written in Python 3.7.1 and tested up to 3.8.2.
+
+# Reference: 
 "Handbook of Applied Cryptography"
 
 Alfred Menezes, Paul van Oorschot, and Scott Vanstone
-
-Written in Python 3.7.1 and tested up to 3.8.2.

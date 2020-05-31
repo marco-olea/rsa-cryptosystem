@@ -20,6 +20,9 @@ class PublicKey:
         self.n = n
         self.e = e
 
+    def __str__(self):
+        return f'{self.n}\n{self.e}'
+
 
 class PrivateKey:
     """Represents the private parameters in the RSA cryptosystem.
@@ -33,6 +36,9 @@ class PrivateKey:
         """Create a Private Key with the given parameters."""
         self.n = n
         self.d = d
+
+    def __str__(self):
+        return f'{self.n}\n{self.d}'
 
 
 class RSA:

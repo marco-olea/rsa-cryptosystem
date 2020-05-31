@@ -2,7 +2,13 @@ from typing import Tuple, Optional
 
 
 def euclidean_algorithm(a: int, b: int) -> Tuple[int, int, int]:
-    """Return a tuple (d, x, y) that satisfies d = ax + by."""
+    """Return a tuple (d, x, y) that satisfies d = ax + by.
+
+    >>> euclidean_algorithm(8, 20)
+    (4, -2, 1)
+    >>> euclidean_algorithm(11, 5)
+    (1, 1, -2)
+    """
     exchanged = False
     if a < b:
         a, b = b, a
@@ -21,18 +27,23 @@ def euclidean_algorithm(a: int, b: int) -> Tuple[int, int, int]:
 
 
 def gcd(a: int, b: int) -> int:
-    """Return the greatest common divisor of a and b."""
+    """Return the greatest common divisor of two positive integers a and b.
+
+    >>> gcd(6, 21)
+    3
+    >>> gcd(14, 280)
+    14
+    """
     return euclidean_algorithm(abs(a), abs(b))[0]
 
 
 def modular_inverse(a: int, mod: int) -> Optional[int]:
-    """Return the modular multiplicative inverse of a.
+    """Return the modular multiplicative inverse of a if it exists.
 
-    Args:
-        a: An integer.
-        mod: Another integer.
-    Returns:
-        The multiplicative inverse of a modulo mod if it exists, None otherwise.
+    >>> modular_inverse(7, 14)
+
+    >>> modular_inverse(7, 13)
+    2
     """
     d, x, y = euclidean_algorithm(a, mod)
     if d == 1:
@@ -43,11 +54,16 @@ def power(base: int, exponent: int, mod: int) -> int:
     """Modular exponentiation of three given integers.
 
     This function uses the Square and Multiply algorithm.
-    
+
+    >>> power(4, 3, 5)
+    4
+    >>> power(3, 4, 8)
+    1
+
     Args:
-        base: The base.
-        exponent: The power that the base will be raised to.
-        mod: The modulo.
+        base:     The base.
+        exponent: The nonnegative power that the base will be raised to.
+        mod:      The modulo.
     Returns:
         (base^exponent) % mod
     """
@@ -63,7 +79,12 @@ def power(base: int, exponent: int, mod: int) -> int:
 
 def largest_power_two_factor(a: int) -> int:
     """Return the largest integer s for which 2^s is a factor of a.
-    
+
+    >>> largest_power_two_factor(3)
+    0
+    >>> largest_power_two_factor(24)
+    3
+
     Args:
         a: A positive integer.
     Returns:

@@ -1,8 +1,9 @@
 from math import sqrt, ceil
 from random import randint, random
 from typing import List
-from crypto.common import power, largest_power_two_factor
+
 from crypto import CURSOR
+from crypto.common import power, largest_power_two_factor
 
 
 def brute_force_primality(n: int) -> bool:
@@ -11,7 +12,7 @@ def brute_force_primality(n: int) -> bool:
     Args:
         n: A positive integer.
     Returns:
-        True if n is prime, False otherwise.
+        <code>True</code> if n is prime, <code>False</code> otherwise.
     """
     if n in [2, 3]:
         return True
@@ -34,10 +35,11 @@ def miller_rabin_primality(n: int, t: int) -> bool:
         n: An integer greater than or equal to 3.
         t: Security parameter; must be greater than or equal to one.
     Returns:
-        True if n is a probable prime, False if n is definitely composite.
+        <code>True</code> if n is a probable prime, <code>False</code> if <i>n</i>
+         is definitely composite.
     """
     s = largest_power_two_factor(n - 1)
-    r = (n - 1) // 2 ** s
+    r = (n - 1) // 2**s
     for _ in range(t):
         a = randint(2, n - 2)
         y = power(a, r, n)
@@ -53,17 +55,19 @@ def miller_rabin_primality(n: int, t: int) -> bool:
     return True
 
 
-def random_search(k: int, t: int=1) -> int:
+def random_search(k: int, t: int = 1) -> int:
     """Return a random k-bit probable prime.
     
-    If a random k-bit odd integer is divisible by a small prime, it is less computationally
-    expensive to rule out the candidate by trial division than by using the Miller-Rabin test.
-    Since the probability that a random integer has a small prime divisor is relatively large,
-    before applying the Miller-Rabin test, the candidate is tested for small divisors below a bound
-    B, hereby determined to be k^2, which is the cost of multiplying two k-digit numbers using the
-    standard algorithm.
+    If a random k-bit odd integer is divisible by a small prime, it is less
+    computationally expensive to rule out the candidate by trial division than
+    by using the Miller-Rabin test. Since the probability that a random integer
+    has a small prime divisor is relatively large, before applying the
+    Miller-Rabin test, the candidate is tested for small divisors below a bound
+    B, hereby determined to be k^2, which is the cost of multiplying two k-digit
+    numbers using the standard algorithm.
+
     The probability that this function does not return a prime number is
-        k^2 * 16^(-sqrt(k)) for k >= 2 and the default t = 1.
+    k^2 * 16^(-sqrt(k)) for k >= 2 and the default t = 1.
         
     Args:
         k: Number of bits, must be greater than or equal to 2.
@@ -100,22 +104,25 @@ def first_k_primes(k: int) -> List[int]:
     return primes
 
 
-def populate_database(k: int, add: bool=False) -> None:
-    """Populate the database with the first k prime numbers.
+def populate_database(k: int) -> None:
+    """Populate the database with k prime numbers.
+
+    If the database is empty, adds the first k prime numbers. Otherwise, adds
+    the next k prime numbers after the largest stored in the database.
     
     Args:
         k: A positive integer.
-        add: If set to True, this function adds the next k prime numbers after the
-            largest one currently stored in the database.
     """
-    if add:
-        CURSOR.execute('SELECT * FROM primes WHERE ord = (SELECT MAX(ord) FROM primes)')
+    CURSOR.execute('SELECT COALESCE(MAX(ord), 0) FROM primes')
+    max_ord = CURSOR.fetchone()[0]
+    if max_ord == 0:
+        primes = [(1, 2)]
+        i, p = 2, 3
+    else:
+        CURSOR.execute('SELECT * FROM primes WHERE ord = ?', [max_ord])
         last_row = CURSOR.fetchone()
         primes = []
         i, p = last_row[0] + 1, last_row[1] + 2
-    else:
-        primes = [2]
-        i, p = 2, 3
     while len(primes) < k:
         if brute_force_primality(p):
             primes.append((i, p))
